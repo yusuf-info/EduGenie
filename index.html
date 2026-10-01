@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="EduGenie - Google Gemini Powered Learning Assistant"
+    >
+
+    <title>EduGenie | Learning Assistant</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', path='style.css') }}"
+    >
+
+</head>
+
+
+<body>
+
+<div class="page">
+
+    <!-- HEADER -->
+
+    <header class="hero">
+
+        <div class="logo">
+            🎓
+        </div>
+
+        <h1>
+            EduGenie
+        </h1>
+
+        <p>
+            Google Gemini Powered Learning Assistant
+        </p>
+
+        <span class="badge">
+            AI • Learn • Understand • Practice
+        </span>
+
+    </header>
+
+
+    <!-- MAIN CARD -->
+
+    <main class="card">
+
+        <form
+            method="post"
+            action="/generate"
+            id="eduForm"
+        >
+
+            <!-- TASK -->
+
+            <div class="field">
+
+                <label for="task">
+                    Choose a learning function
+                </label>
+
+                <select
+                    id="task"
+                    name="task"
+                    required
+                >
+
+                    <option
+                        value="qa"
+                        {% if task == "qa" %}selected{% endif %}
+                    >
+                        💬 Ask a Question
+                    </option>
+
+                    <option
+                        value="explain"
+                        {% if task == "explain" %}selected{% endif %}
+                    >
+                        📚 Explain a Topic
+                    </option>
+
+                    <option
+                        value="quiz"
+                        {% if task == "quiz" %}selected{% endif %}
+                    >
+                        📝 Generate Quiz
+                    </option>
+
+                    <option
+                        value="summary"
+                        {% if task == "summary" %}selected{% endif %}
+                    >
+                        📄 Summarize Text
+                    </option>
+
+                    <option
+                        value="learning"
+                        {% if task == "learning" %}selected{% endif %}
+                    >
+                        🧭 Learning Path
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <!-- INPUT -->
+
+            <div class="field">
+
+                <label for="text">
+                    Enter your question, topic or text
+                </label>
+
+                <textarea
+                    id="text"
+                    name="text"
+                    rows="10"
+                    maxlength="100000"
+                    placeholder="Example: Explain Artificial Intelligence in simple words..."
+                    required
+                ></textarea>
+
+                <div class="counter">
+                    <span id="charCount">0</span>
+                    / 100000 characters
+                </div>
+
+            </div>
+
+
+            <!-- BUTTON -->
+
+            <button
+                type="submit"
+                id="generateButton"
+            >
+                <span id="buttonText">
+                    ✨ Generate Answer
+                </span>
+
+                <span
+                    id="loadingText"
+                    class="hidden"
+                >
+                    ⏳ Generating...
+                </span>
+            </button>
+
+        </form>
+
+
+        <!-- ERROR -->
+
+        {% if error %}
+
+        <section class="error-box">
+
+            <h2>
+                ⚠️ Something went wrong
+            </h2>
+
+            <p>
+                {{ error }}
+            </p>
+
+        </section>
+
+        {% endif %}
+
+
+        <!-- RESULT -->
+
+        {% if result %}
+
+        <section class="result-box">
+
+            <div class="result-header">
+
+                <h2>
+                    🤖 EduGenie Result
+                </h2>
+
+                <button
+                    type="button"
+                    class="copy-button"
+                    onclick="copyResult()"
+                >
+                    Copy
+                </button>
+
+            </div>
+
+
+            <div
+                id="resultContent"
+                class="result-content"
+            >
+
+                {% if task == "quiz" %}
+
+                    {% for question in result %}
+
+                    <article class="quiz-question">
+
+                        <h3>
+                            Question {{ loop.index }}
+                        </h3>
+
+                        <p>
+                            {{ question.question }}
+                        </p>
+
+                        <div class="options">
+
+                            {% for option in question.options %}
+
+                            <div class="option">
+                                <strong>
+                                    {{ "ABCD"[loop.index0] }}.
+                                </strong>
+
+                                {{ option }}
+                            </div>
+
+                            {% endfor %}
+
+                        </div>
+
+                        <div class="answer">
+
+                            <strong>
+                                Correct Answer:
+                            </strong>
+
+                            {{ question.answer }}
+
+                            <br>
+
+                            <span>
+                                {{ question.explanation }}
+                            </span>
+
+                        </div>
+
+                    </article>
+
+                    {% endfor %}
+
+                {% else %}
+
+                    <div class="text-result">
+                        {{ result }}
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </section>
+
+        {% endif %}
+
+    </main>
+
+
+    <!-- FOOTER -->
+
+    <footer>
+
+        <p>
+            EduGenie • Google Gemini Powered Learning Assistant
+        </p>
+
+    </footer>
+
+</div>
+
+
+<script>
+
+const textarea = document.getElementById("text");
+const charCount = document.getElementById("charCount");
+const form = document.getElementById("eduForm");
+
+const button = document.getElementById("generateButton");
+const buttonText = document.getElementById("buttonText");
+const loadingText = document.getElementById("loadingText");
+
+
+function updateCounter() {
+
+    if (!textarea) {
+        return;
+    }
+
+    charCount.textContent = textarea.value.length;
+}
+
+
+if (textarea) {
+
+    textarea.addEventListener(
+        "input",
+        updateCounter
+    );
+
+    updateCounter();
+}
+
+
+if (form) {
+
+    form.addEventListener(
+        "submit",
+        function () {
+
+            button.disabled = true;
+
+            buttonText.classList.add("hidden");
+
+            loadingText.classList.remove("hidden");
+
+        }
+    );
+
+}
+
+
+function copyResult() {
+
+    const result =
+        document.getElementById("resultContent");
+
+    if (!result) {
+        return;
+    }
+
+    navigator.clipboard.writeText(
+        result.innerText
+    )
+    .then(() => {
+
+        alert("Result copied!");
+
+    })
+    .catch(() => {
+
+        alert("Unable to copy result.");
+
+    });
+
+}
+
+</script>
+
+
+</body>
+
+</html>
